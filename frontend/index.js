@@ -13,6 +13,10 @@ const joinButton = document.getElementById('join-button');
 const joinInput = document.getElementById('join-input');
 
 //room
+const roomClients = document.getElementById('room-clients');
+const roomClientsInfo = document.getElementById('room-clients-info');
+const leaveButton = document.getElementById('room-disconnect');
+
 const promptLogin = document.getElementById('prompt-login');
 const promptInfo = document.getElementById('prompt-info');
 const promptSubmissions = document.getElementById('prompt-submissions');
@@ -22,20 +26,30 @@ const promptInput = document.getElementById('prompt-input');
 
 //instantiate socket to connect to server
 const socket = io('http://localhost:3000');
+
+//get messages from server
 socket.on('connect', () => {
-  displayMessage(`You connected with id ${socket.id}`);
+  displayMessage(`You connected with id ${socket.id}!`);
 
   //reveice message from server and display it
   socket.on('receive-message', (message, isError = false) => {
     displayMessage(message, isError);
   });
 
+  //list all users in current room
+  socket.on('update-clients', clients => {
+    roomClientsInfo.textContent = `${clients.length} user${clients.length == 1 ? '' : 's'} connected!`;
+
+    roomClients.innerHTML = '';
+    for(const client of clients) {
+      roomClients.append(createDOMElement('li', client));
+    }
+  });
+
   //triggered when everyone in the room submitted a prompt
   socket.on('show-submissions', (submissions) => {
     for(let submission of submissions) {
-      const li = document.createElement('li');
-      li.textContent = submission;
-      promptSubmissions.append(li);
+      promptSubmissions.append(createDOMElement('li', submission));
       
       promptInfo.style.display = 'none';
       promptSubmissions.style.display = 'block';
@@ -43,25 +57,15 @@ socket.on('connect', () => {
   });
 });
 
-promptButton.addEventListener('click', e => {
-  const prompt = promptInput.value;
-
-  socket.emit('submit-prompt', prompt, message => {
-    //displayMessage(message);
-
-    //hide prompt input
-    promptLogin.style.display = 'none';
-
-    //show waiting screen
-    promptInfo.style.display = 'block';
-    promptInfo.textContent = "Your prompt has been submitted. Wait for the others to submit their prompt!";
-  });
-});
-
+//EVENT LISTENERS
 usernameButton.addEventListener('click', e => {
   const username = usernameInput.value;
   usernameInput.value = "";
   console.log(username);
+
+  socket.emit('set-username', username, (message, isError = false) => {
+    displayMessage(message, isError);
+  });
 });
 
 createButton.addEventListener('click', e => {
@@ -81,6 +85,44 @@ joinButton.addEventListener('click', e => {
   socket.emit('join-room', room, loginServerErrorHandling);
 });
 
+promptButton.addEventListener('click', e => {
+  const prompt = promptInput.value;
+
+  socket.emit('submit-prompt', prompt, message => {
+    //displayMessage(message);
+
+    //hide prompt input
+    promptLogin.style.display = 'none';
+
+    //show waiting screen
+    promptInfo.style.display = 'block';
+    promptInfo.textContent = "Your prompt has been submitted. Wait for the others to submit their prompt!";
+  });
+});
+
+leaveButton.addEventListener('click', e => {
+  socket.emit('leave-room', (message, isError = false) => {
+    displayMessage(message, isError);
+
+    roomContainer.style.display = 'none';
+    loginContainer.style.display = 'flex';
+  });
+});
+
+
+//HELPER FUNCTIONS
+function createDOMElement(element, text) {
+  const DOMElement = document.createElement(element);
+  DOMElement.textContent = text;
+
+  return DOMElement;
+}
+
+//callback function passed to backend
+function logMessageCallback(message, isError = false) {
+  displayMessage(message, isError);
+}
+
 //used as callback function given from client, is called from server (error handling)
 function loginServerErrorHandling(room, message, isError = false) {
   displayMessage(message, isError);
@@ -89,10 +131,9 @@ function loginServerErrorHandling(room, message, isError = false) {
   if(!isError) showRoomContainer(room);
 }
 
-function displayMessage(message, error = false) {
-  const div = document.createElement("div");
-  if(error) div.style.color = "red";
-  div.textContent = message;
+function displayMessage(message, isError = false) {
+  const div = createDOMElement('div', message);
+  if(isError) div.style.color = "red";
 
   infoContainer.append(div);
 }

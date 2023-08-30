@@ -1,18 +1,30 @@
 //map of rooms as keys and the submissions in each room as their value
 let submissions = new Map();
+//map of ids as keys and usernames as values
+let usernames = new Map();
 
 const io = require('socket.io')(3000, {
   cors: {
-    origin: ['http://localhost:8080', 'http://127.0.0.1:53316'],
+    origin: ['http://localhost:8080', 'http://127.0.0.1:61674'],
   }
 });
 
 io.on('connection', socket => {
+  socket.on('set-username', (username, callback) => {
+    usernames.set(socket.id, username);
+
+    callback(`Successfully changed username to ${username}!`);
+  });
+
   socket.on('create-room', (room, callback) => {
     //room collision detection todo
+
     socket.join(room);
 
     callback(room, `Created room ${room}!`);
+
+    //send connected clients list of all connected clients
+    io.sockets.in(room).emit('update-clients', getClientsInRoom(room));
   })
 
   socket.on('join-room', (room, callback) => {
@@ -21,14 +33,31 @@ io.on('connection', socket => {
       //join the room
       socket.join(room);
 
+      //tell other room members that user has joined
+      socket.to(room).emit('receive-message', `${getUsername(socket.id)} joined the room!`);
+
       //update to room interface instead of login
       callback(room, `Joined room ${room}!`);
 
-      //tell other room members that user has joined
-      socket.to(room).emit('receive-message', `${socket.id} joined the room!`);
+      //send connected clients list of all connected clients
+      io.sockets.in(room).emit('update-clients', getClientsInRoom(room));
     } else {
       callback(room, `Room ${room} does not exist!`, true);
     }
+  });
+
+  socket.on('leave-room', (callback) => {
+    const room = [...socket.rooms][1]; //[0] is socket.id
+
+    socket.leave(room);
+
+    //show all connected clients in room
+    io.sockets.in(room).emit('update-clients', getClientsInRoom(room));
+
+    //tell other room members that user has left
+    socket.to(room).emit('receive-message', `${getUsername(socket.id)} left the room!`);
+
+    callback(`You left room ${room}!`);
   });
 
   socket.on('submit-prompt', (prompt, callback) => {
@@ -56,6 +85,23 @@ io.on('connection', socket => {
     }
   });
 });
+
+function getUsername(id) {
+  return usernames.get(id) ? usernames.get(id) : id;
+}
+
+function getClientsInRoom(room) {
+  if(io.sockets.adapter.rooms.get(room) == undefined) return [];
+  
+  const clients = [...io.sockets.adapter.rooms.get(room)];
+
+  //match client ids with their username
+  for(let i = 0;i < clients.length;i++) {
+    clients[i] = getUsername(clients[i]);
+  }
+
+  return clients;
+}
 
 function shuffle(array) {
   let currentIndex = array.length,  randomIndex;
