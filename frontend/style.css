@@ -1,0 +1,97 @@
+:root {
+    --fs-300: 0.9375rem;
+    --fs-400: 1.0625rem;
+    --fs-500: 1.375rem;
+    --fs-550: 1.25rem;
+    --fs-600: 1.875rem;
+    --fs-700: 2rem;
+
+    --fw-400: 400;
+    --fw-700: 700;
+    --fw-900: 900;
+
+    --clr-primary-600: hsl(340, 100%, 21%);
+    --clr-primary-500: hsl(332, 98%, 33%);
+    --clr-primary-400: hsl(328, 92%, 47%);
+    --clr-primary-300: hsl(327, 88%, 68%);
+    --clr-primary-200: hsl(310, 100%, 82%);
+    --clr-primary-100: hsl(310, 100%, 97%);
+
+    --clr-comp-100: hsl(0, 0%, 100%);
+}
+
+* {
+    margin: 0;
+}
+
+h1, h2, h3 {
+    color: var(--clr-primary-300);
+}
+
+h1 {
+    font-size: var(--fs-600);
+}
+
+h2 {
+    font-size: var(--fs-500);
+}
+
+h3 {
+    font-size: var(--fs-400);
+}
+
+input {
+    width: 200px;
+    height: 20px;
+
+    border: solid 1px var(--clr-primary-300);
+    border-radius: 5px;
+}
+
+button {
+    background-color: var(--clr-comp-100);
+
+    padding: 5px;
+
+    border: solid 1px var(--clr-primary-300);
+    border-radius: 10px;
+}
+
+button:hover {
+    box-shadow: 0 0 3px 3px var(--clr-primary-200);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-self: center;
+    gap: 5px;
+
+    margin: 10px;
+    padding: 10px;
+
+    text-align: center;
+    background-color: var(--clr-primary-100);
+    border: solid 1px var(--clr-primary-300);
+}
+
+#info-container {
+    position: sticky;
+
+    bottom: 0;
+}
+
+  #room-container {
+    display: none;
+
+    gap: 20px;
+  }
+
+  #username-input {
+    margin-bottom: 20px;
+  }
+
+  #game-master, #next-button {
+    display: none;
+  }

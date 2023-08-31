@@ -31,8 +31,8 @@ const promptInput = document.getElementById('prompt-input');
 const nextButton = document.getElementById('next-button');
 
 //instantiate socket to connect to server
-const socket = io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/'); //production
-//const socket = io('http://localhost:3000'); //development
+//const socket = io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/'); //production
+const socket = io('http://localhost:3000'); //development
 
 //get messages from server
 socket.on('connect', () => {

@@ -7,7 +7,7 @@ let gameMasters = new Map();
 
 const io = require('socket.io')(process.env.PORT || 3000, {
   cors: {
-    origin: ['http://localhost:8080', 'http://127.0.0.1:56874', 'https://zor-nobody-is-perfect.netlify.app'],
+    origin: ['http://localhost:8080', 'http://127.0.0.1:58109', 'https://zor-nobody-is-perfect.netlify.app'],
   }
 });
 
