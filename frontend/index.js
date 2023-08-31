@@ -25,7 +25,7 @@ const promptButton = document.getElementById('prompt-button');
 const promptInput = document.getElementById('prompt-input');
 
 //instantiate socket to connect to server
-const socket = io('http://localhost:3000');
+const socket = io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/');
 
 //get messages from server
 socket.on('connect', () => {

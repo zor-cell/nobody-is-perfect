@@ -3,7 +3,7 @@ let submissions = new Map();
 //map of ids as keys and usernames as values
 let usernames = new Map();
 
-const io = require('socket.io')(3000, {
+const io = require('socket.io')(process.env.PORT || 3000, {
   cors: {
     origin: ['http://localhost:8080', 'http://127.0.0.1:61674'],
   }
