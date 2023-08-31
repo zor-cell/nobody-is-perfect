@@ -2,18 +2,28 @@
 let submissions = new Map();
 //map of ids as keys and usernames as values
 let usernames = new Map();
+//socket id of the game master
+let gameMasters = new Map();
 
 const io = require('socket.io')(process.env.PORT || 3000, {
   cors: {
-    origin: ['http://localhost:8080', 'http://127.0.0.1:61674', 'https://zor-nobody-is-perfect.netlify.app'],
+    origin: ['http://localhost:8080', 'http://127.0.0.1:56874', 'https://zor-nobody-is-perfect.netlify.app'],
   }
 });
 
 io.on('connection', socket => {
   socket.on('set-username', (username, callback) => {
+    if(username == '') {
+      return; 
+    }
+
     usernames.set(socket.id, username);
 
     callback(`Successfully changed username to ${username}!`);
+  });
+
+  socket.on('set-gamemaster', () => {
+    chooseGamemaster(socket);
   });
 
   socket.on('create-room', (room, callback) => {
@@ -34,10 +44,10 @@ io.on('connection', socket => {
       socket.join(room);
 
       //tell other room members that user has joined
-      socket.to(room).emit('receive-message', `${getUsername(socket.id)} joined the room!`);
+      io.to(room).emit('receive-message', `${getUsername(socket.id)} joined the room!`);
 
       //update to room interface instead of login
-      callback(room, `Joined room ${room}!`);
+      callback(room, `You joined room ${room}!`);
 
       //send connected clients list of all connected clients
       io.sockets.in(room).emit('update-clients', getClientsInRoom(room));
@@ -47,22 +57,37 @@ io.on('connection', socket => {
   });
 
   socket.on('leave-room', (callback) => {
-    const room = [...socket.rooms][1]; //[0] is socket.id
-
+    const room = getRoom(socket);
     socket.leave(room);
 
     //show all connected clients in room
     io.sockets.in(room).emit('update-clients', getClientsInRoom(room));
 
     //tell other room members that user has left
-    socket.to(room).emit('receive-message', `${getUsername(socket.id)} left the room!`);
+    io.to(room).emit('receive-message', `${getUsername(socket.id)} left the room!`);
 
     callback(`You left room ${room}!`);
   });
 
+  socket.on('reset-game', () => {
+    //reset game for everyone
+    const room = getRoom(socket);
+    io.sockets.in(room).emit('show-reset');
+
+    chooseGamemaster(socket);
+  });
+
+  socket.on('submit-question', (question, callback) => {
+    const room = getRoom(socket);
+
+    //show question to all
+    io.sockets.in(room).emit('show-question', question);
+    callback(`Submitted question ${question}!`);
+  });
+
   socket.on('submit-prompt', (prompt, callback) => {
     //get room of socket and every socket in that room
-    const room = [...socket.rooms][1]; //[0] is socket.id
+    const room = getRoom(socket);
     const clients = io.sockets.adapter.rooms.get(room);
 
     callback(`Your prompt has been submitted!`)
@@ -75,25 +100,35 @@ io.on('connection', socket => {
       length = submissions.get(room).length;
     }
 
-    //console.log(clients, submissions, length, clients.size);
     //show submissions if every player has submitted
     if(length >= clients.size) {
       //send submissions to everyone with randomly shuffled array
       io.sockets.in(room).emit('show-submissions', shuffle(submissions.get(room)));
+      
       //reset submissions
       submissions.set(room, new Array());
+
+      //show next round button only to gamemaster
+      io.to(gameMasters.get(room)).emit('show-next');
     }
   });
 });
+
+function getRoom(socket) {
+  return [...socket.rooms][1]; //[0] is socket.id
+}
 
 function getUsername(id) {
   return usernames.get(id) ? usernames.get(id) : id;
 }
 
-function getClientsInRoom(room) {
+function getClientsInRoom(room, byUsername = true) {
   if(io.sockets.adapter.rooms.get(room) == undefined) return [];
   
   const clients = [...io.sockets.adapter.rooms.get(room)];
+
+  //return client ids when specified
+  if(!byUsername) return clients;
 
   //match client ids with their username
   for(let i = 0;i < clients.length;i++) {
@@ -101,6 +136,29 @@ function getClientsInRoom(room) {
   }
 
   return clients;
+}
+
+function chooseGamemaster(socket) {
+  const room = getRoom(socket);
+  const clients = getClientsInRoom(room, false);
+
+  //if there is no gameMaster, set client to gamemaster (ie on create command)
+  if(gameMasters.get(room) == undefined) gameMasters.set(room, socket.id);
+  else {
+    //otherwise get next client in list as new gamemaster
+    let i = clients.indexOf(gameMasters.get(room));
+
+    if(i == -1) gameMasters.set(room, socket.id);
+    else {
+      if(i == clients.length - 1) i = 0;
+      else i++;
+
+      gameMasters.set(room, clients[i]);
+    }
+  }
+
+  //only show gamemaster ui to new gamemaster
+  io.to(gameMasters.get(room)).emit('show-gamemaster');
 }
 
 function shuffle(array) {

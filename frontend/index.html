@@ -31,7 +31,11 @@
     }
 
     #username-input {
-      margin-bottom: 50px;
+      margin-bottom: 20px;
+    }
+
+    #game-master, #next-button {
+      display: none;
     }
 
   </style>
@@ -42,13 +46,10 @@
       <h2>Nobody Is Perfect</h2>
       <div>
       <input placeholder="Enter username" id="username-input">
-      <button id="username-button">Submit</button>
       </div>
       
       <button id="create-button">Create New Room</button>
-
       <p>OR</p>
-
       <input placeholder="Enter Room Id" id="join-input">
       <button id="join-button">Join Room</button>
     </div>
@@ -61,8 +62,14 @@
         <button id="room-disconnect">Leave Room</button>
       </div>
 
+      <div id="game-master">
+        <h3>You are the Game Master!</h3>
+        <input placeholder="Enter question" id="game-master-input">
+        <button id="game-master-button">Submit</button>
+      </div>
+
       <div id="prompt-login">
-        <div id="prompt">Was verbirgt sich hinter dem Wort Schabber?</div>
+        <div id="prompt-question">No question submitted</div>
         <div>
           <input placeholder="Enter your prompt" id="prompt-input">
           <button id="prompt-button">Submit</button>
@@ -70,9 +77,12 @@
       </div>
 
       <div id="prompt-info"></div>
+      
       <ol id="prompt-submissions" type="A">
-        <h2>Submissions</h2>
+        <h3>Submissions</h3>
       </ol>
+
+      <button id="next-button">Next Round</button>
     </div>
 
     <div id="info-container">

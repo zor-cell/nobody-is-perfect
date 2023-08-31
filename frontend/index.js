@@ -5,7 +5,6 @@ const roomContainer = document.getElementById('room-container');
 const infoContainer = document.getElementById('info-container');
 
 //login
-const usernameButton = document.getElementById('username-button');
 const usernameInput = document.getElementById('username-input');
 
 const createButton = document.getElementById('create-button');
@@ -17,15 +16,23 @@ const roomClients = document.getElementById('room-clients');
 const roomClientsInfo = document.getElementById('room-clients-info');
 const leaveButton = document.getElementById('room-disconnect');
 
+const gameMaster = document.getElementById('game-master');
+const gameMasterInput = document.getElementById('game-master-input');
+const gameMasterButton = document.getElementById('game-master-button');
+
 const promptLogin = document.getElementById('prompt-login');
+const promptQuestion = document.getElementById('prompt-question');
 const promptInfo = document.getElementById('prompt-info');
 const promptSubmissions = document.getElementById('prompt-submissions');
 
 const promptButton = document.getElementById('prompt-button');
 const promptInput = document.getElementById('prompt-input');
 
+const nextButton = document.getElementById('next-button');
+
 //instantiate socket to connect to server
-const socket = io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/');
+const socket = io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/'); //production
+//const socket = io('http://localhost:3000'); //development
 
 //get messages from server
 socket.on('connect', () => {
@@ -46,25 +53,46 @@ socket.on('connect', () => {
     }
   });
 
+  socket.on('show-question', question => {
+    promptQuestion.textContent = question;
+
+    hideDOMElement(gameMasterInput);
+    hideDOMElement(gameMasterButton);
+
+    showDOMElement(promptLogin);
+  });
+
   //triggered when everyone in the room submitted a prompt
   socket.on('show-submissions', (submissions) => {
     for(let submission of submissions) {
       promptSubmissions.append(createDOMElement('li', submission));
-      
-      promptInfo.style.display = 'none';
-      promptSubmissions.style.display = 'block';
     }
+
+    hideDOMElement(promptInfo);
+    showDOMElement(promptSubmissions);
+  });
+
+  socket.on('show-gamemaster', () => {
+    showDOMElement(gameMaster, 'inline-block');
+    showDOMElement(gameMasterInput);
+    showDOMElement(gameMasterButton);
+  });
+
+  socket.on('show-next', () => {
+    showDOMElement(nextButton);
+  });
+
+  socket.on('show-reset' , () => {
+    startRound();
   });
 });
 
 //EVENT LISTENERS
-usernameButton.addEventListener('click', e => {
+usernameInput.addEventListener('input', e => {
   const username = usernameInput.value;
-  usernameInput.value = "";
-  console.log(username);
 
   socket.emit('set-username', username, (message, isError = false) => {
-    displayMessage(message, isError);
+    //displayMessage(message, isError);
   });
 });
 
@@ -74,7 +102,18 @@ createButton.addEventListener('click', e => {
   const room = Math.floor(Math.random() * MAX_ROOM).toString();
 
   //try to create given room
-  socket.emit('create-room', room, loginServerErrorHandling);
+  socket.emit('create-room', room, (room, message, isError = false) => {
+    displayMessage(message, isError);
+  
+    //only show room if there was no error
+    if(!isError) {
+      startRound();
+      document.getElementById('room').textContent = `Room ${room}`;
+
+      //choose new gamemaster
+      socket.emit('set-gamemaster');
+    };
+  });
 });
 
 joinButton.addEventListener('click', e => {
@@ -82,21 +121,14 @@ joinButton.addEventListener('click', e => {
   joinInput.value = "";
 
   //try to join given room
-  socket.emit('join-room', room, loginServerErrorHandling);
-});
-
-promptButton.addEventListener('click', e => {
-  const prompt = promptInput.value;
-
-  socket.emit('submit-prompt', prompt, message => {
-    //displayMessage(message);
-
-    //hide prompt input
-    promptLogin.style.display = 'none';
-
-    //show waiting screen
-    promptInfo.style.display = 'block';
-    promptInfo.textContent = "Your prompt has been submitted. Wait for the others to submit their prompt!";
+  socket.emit('join-room', room, (room, message, isError = false) => {
+    displayMessage(message, isError);
+  
+    //only show room if there was no error
+    if(!isError) {
+      startRound();
+      document.getElementById('room').textContent = `Room ${room}`;
+    }
   });
 });
 
@@ -104,10 +136,37 @@ leaveButton.addEventListener('click', e => {
   socket.emit('leave-room', (message, isError = false) => {
     displayMessage(message, isError);
 
-    roomContainer.style.display = 'none';
-    loginContainer.style.display = 'flex';
+    hideDOMElement(roomContainer);
+    showDOMElement(loginContainer, 'flex');
   });
 });
+
+gameMasterButton.addEventListener('click', e => {
+  const question = gameMasterInput.value;
+  gameMasterInput.value = '';
+
+  socket.emit('submit-question', question, message => {
+    displayMessage(message);
+  });
+});
+
+promptButton.addEventListener('click', e => {
+  const prompt = promptInput.value;
+  promptInput.value = '';
+
+  socket.emit('submit-prompt', prompt, message => {
+    //displayMessage(message);
+
+    hideDOMElement(promptLogin);
+    showDOMElement(promptInfo);
+    promptInfo.textContent = "Your prompt has been submitted. Wait for the others to submit their prompt!";
+  });
+});
+
+nextButton.addEventListener('click', e => {
+  socket.emit('reset-game');
+});
+
 
 
 //HELPER FUNCTIONS
@@ -118,17 +177,17 @@ function createDOMElement(element, text) {
   return DOMElement;
 }
 
+function hideDOMElement(element) {
+  element.style.display = 'none';
+}
+
+function showDOMElement(element, display = 'block') {
+  element.style.display = display;
+}
+
 //callback function passed to backend
 function logMessageCallback(message, isError = false) {
   displayMessage(message, isError);
-}
-
-//used as callback function given from client, is called from server (error handling)
-function loginServerErrorHandling(room, message, isError = false) {
-  displayMessage(message, isError);
-
-  //only show room if there was no error
-  if(!isError) showRoomContainer(room);
 }
 
 function displayMessage(message, isError = false) {
@@ -138,16 +197,17 @@ function displayMessage(message, isError = false) {
   infoContainer.append(div);
 }
 
-function showRoomContainer(room) {
-  //show room
-  roomContainer.style.display = 'flex';
-  promptLogin.style.display = 'block';
-  //hide other room components
-  promptInfo.style.display = 'none';
-  promptSubmissions.style.display = 'none';
+function startRound() {
+  promptQuestion.textContent = 'No question submitted';
 
-  document.getElementById('room').textContent = `Room ${room}`;
+  hideDOMElement(loginContainer);
+  hideDOMElement(gameMaster);
+  hideDOMElement(promptLogin);
+  hideDOMElement(promptInfo);
+  hideDOMElement(promptSubmissions);
+  hideDOMElement(nextButton);
 
-  //hide login
-  loginContainer.style.display = 'none';
+  showDOMElement(roomContainer, 'flex');
+
+  promptSubmissions.innerHTML = '<h3>Submissions</h3>';
 }
