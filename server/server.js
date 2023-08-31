@@ -5,7 +5,7 @@ let usernames = new Map();
 
 const io = require('socket.io')(process.env.PORT || 3000, {
   cors: {
-    origin: ['http://localhost:8080', 'http://127.0.0.1:61674'],
+    origin: ['http://localhost:8080', 'http://127.0.0.1:61674', 'https://zor-nobody-is-perfect.netlify.app'],
   }
 });
 
