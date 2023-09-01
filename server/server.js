@@ -1,13 +1,19 @@
+const RoomSettings = {
+
+};
+
 //map of rooms as keys and the submissions in each room as their value
 let submissions = new Map();
 //map of ids as keys and usernames as values
 let usernames = new Map();
 //socket id of the game master
 let gameMasters = new Map();
+//map of rooms as keys and whether a game is active in this room
+let activeRooms = new Map();
 
 const io = require('socket.io')(process.env.PORT || 3000, {
   cors: {
-    origin: ['http://localhost:8080', 'http://127.0.0.1:58109', 'https://zor-nobody-is-perfect.netlify.app'],
+    origin: ['http://localhost:8080', 'http://127.0.0.1:49413', 'https://zor-nobody-is-perfect.netlify.app'],
   }
 });
 
@@ -31,13 +37,19 @@ io.on('connection', socket => {
 
     socket.join(room);
 
-    callback(room, `Created room ${room}!`);
+    callback(room, `You created room ${room}!`);
 
     //send connected clients list of all connected clients
     io.sockets.in(room).emit('update-clients', getClientsInRoom(room));
   })
 
   socket.on('join-room', (room, callback) => {
+    //if room has active game dont allow join
+    if(activeRooms.get(room) == true) {
+      callback(room, `You cannot join an active room!`, true);
+      return;
+    }
+
     //join room if it exists, otherwise throw error
     if(io.sockets.adapter.rooms.get(room)) {
       //join the room
@@ -75,6 +87,7 @@ io.on('connection', socket => {
     io.sockets.in(room).emit('show-reset');
 
     chooseGamemaster(socket);
+    activeRooms.set(room, false);
   });
 
   socket.on('submit-question', (question, callback) => {
@@ -83,12 +96,18 @@ io.on('connection', socket => {
     //show question to all
     io.sockets.in(room).emit('show-question', question);
     callback(`Submitted question ${question}!`);
+
+    //show X out of Y submission to users
+    const clients = getClientsInRoom(room);
+    io.sockets.in(room).emit('show-submission-state', 0, clients.length);
+
+    activeRooms.set(room, true);
   });
 
   socket.on('submit-prompt', (prompt, callback) => {
     //get room of socket and every socket in that room
     const room = getRoom(socket);
-    const clients = io.sockets.adapter.rooms.get(room);
+    const clients = getClientsInRoom(room);
 
     callback(`Your prompt has been submitted!`)
 
@@ -100,8 +119,11 @@ io.on('connection', socket => {
       length = submissions.get(room).length;
     }
 
+    //show X out of Y submission to users
+    io.sockets.in(room).emit('show-submission-state', length, clients.length);
+
     //show submissions if every player has submitted
-    if(length >= clients.size) {
+    if(length >= clients.length) {
       //send submissions to everyone with randomly shuffled array
       io.sockets.in(room).emit('show-submissions', shuffle(submissions.get(room)));
       

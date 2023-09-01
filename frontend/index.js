@@ -20,6 +20,9 @@ const gameMaster = document.getElementById('game-master');
 const gameMasterInput = document.getElementById('game-master-input');
 const gameMasterButton = document.getElementById('game-master-button');
 
+const promptCounter = document.getElementById('prompt-counter');
+const promptCurrent = document.getElementById('prompt-current');
+const promptMax = document.getElementById('prompt-max');
 const promptLogin = document.getElementById('prompt-login');
 const promptQuestion = document.getElementById('prompt-question');
 const promptInfo = document.getElementById('prompt-info');
@@ -60,7 +63,13 @@ socket.on('connect', () => {
     hideDOMElement(gameMasterButton);
 
     showDOMElement(promptLogin);
+    showDOMElement(promptCounter);
   });
+
+  socket.on('show-submission-state', (currentSubmissions, maxSubmissions) => {
+    promptCurrent.textContent = currentSubmissions;
+    promptMax.textContent = maxSubmissions;
+  })
 
   //triggered when everyone in the room submitted a prompt
   socket.on('show-submissions', (submissions) => {
@@ -69,11 +78,12 @@ socket.on('connect', () => {
     }
 
     hideDOMElement(promptInfo);
+    hideDOMElement(promptCounter);
     showDOMElement(promptSubmissions);
   });
 
   socket.on('show-gamemaster', () => {
-    showDOMElement(gameMaster, 'inline-block');
+    showDOMElement(gameMaster, 'flex');
     showDOMElement(gameMasterInput);
     showDOMElement(gameMasterButton);
   });
@@ -98,7 +108,7 @@ usernameInput.addEventListener('input', e => {
 
 createButton.addEventListener('click', e => {
   //get random room number
-  const MAX_ROOM = 1000000;
+  const MAX_ROOM = 1000;
   const room = Math.floor(Math.random() * MAX_ROOM).toString();
 
   //try to create given room
@@ -204,6 +214,7 @@ function startRound() {
   hideDOMElement(gameMaster);
   hideDOMElement(promptLogin);
   hideDOMElement(promptInfo);
+  hideDOMElement(promptCounter);
   hideDOMElement(promptSubmissions);
   hideDOMElement(nextButton);
 

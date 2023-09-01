@@ -22,6 +22,8 @@
 
 * {
     margin: 0;
+
+    font-family: "Arial", sans-serif;
 }
 
 h1, h2, h3 {
@@ -38,6 +40,11 @@ h2 {
 
 h3 {
     font-size: var(--fs-400);
+}
+
+ul, ol {
+    margin: 0;
+    padding: 0;
 }
 
 input {
@@ -68,7 +75,8 @@ button:hover {
     justify-self: center;
     gap: 5px;
 
-    margin: 10px;
+    width: 95%;
+    margin: 1rem auto 1rem;
     padding: 10px;
 
     text-align: center;
@@ -76,22 +84,34 @@ button:hover {
     border: solid 1px var(--clr-primary-300);
 }
 
-#info-container {
-    position: sticky;
+.flex-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 
-    bottom: 0;
+    gap: 5px;
 }
 
-  #room-container {
-    display: none;
+#info-container {
+    position: fixed;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%); 
 
+    height: 25%;
+
+    overflow: auto;
+}
+
+#room-container, #game-master, #next-button {
+    display: none;
+}
+
+#room-container {
     gap: 20px;
-  }
+}
 
-  #username-input {
+#username-input {
     margin-bottom: 20px;
-  }
-
-  #game-master, #next-button {
-    display: none;
-  }
+}

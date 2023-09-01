@@ -18,28 +18,32 @@
     </div>
 
     <div id="room-container" class="container">
-      <div>
+      <div class="flex-container">
         <h1 id="room">Room 12345678</h1>
         <h3 id="room-clients-info"></h3>
         <ul id="room-clients"></ul>
         <button id="room-disconnect">Leave Room</button>
       </div>
 
-      <div id="game-master">
+      <div id="game-master" class="flex-container">
         <h3>You are the Game Master!</h3>
         <input placeholder="Enter question" id="game-master-input">
         <button id="game-master-button">Submit</button>
       </div>
 
       <div id="prompt-login">
-        <div id="prompt-question">No question submitted</div>
-        <div>
+        <div class="flex-container">
+          <p id="prompt-question">No question submitted</p>
           <input placeholder="Enter your prompt" id="prompt-input">
           <button id="prompt-button">Submit</button>
         </div>
       </div>
 
-      <div id="prompt-info"></div>
+      <p id="prompt-info"></p>
+
+      <p id="prompt-counter">
+        <span id="prompt-current">X</span>/<span id="prompt-max">Y</span> submitted
+      </p>
       
       <ol id="prompt-submissions" type="A">
         <h3>Submissions</h3>
