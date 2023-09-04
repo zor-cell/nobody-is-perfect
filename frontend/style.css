@@ -106,7 +106,7 @@ button:hover {
     overflow: auto;
 }
 
-#room-container, #game-master, #next-button {
+#room-container, #game-master, #show-users-button, #next-button {
     display: none;
 }
 

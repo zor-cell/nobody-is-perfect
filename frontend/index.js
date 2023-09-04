@@ -31,11 +31,12 @@ const promptSubmissions = document.getElementById('prompt-submissions');
 const promptButton = document.getElementById('prompt-button');
 const promptInput = document.getElementById('prompt-input');
 
+const userButton = document.getElementById('show-users-button');
 const nextButton = document.getElementById('next-button');
 
 //instantiate socket to connect to server
-const socket = io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/'); //production
-//const socket = io('http://localhost:3000'); //development
+//const socket = io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/'); //production
+const socket = io('http://localhost:3000'); //development
 
 //get messages from server
 socket.on('connect', () => {
@@ -72,9 +73,9 @@ socket.on('connect', () => {
   })
 
   //triggered when everyone in the room submitted a prompt
-  socket.on('show-submissions', (submissions) => {
+  socket.on('show-submissions', submissions => {
     for(let submission of submissions) {
-      promptSubmissions.append(createDOMElement('li', submission));
+      promptSubmissions.append(createDOMElement('li', `${submission.prompt}`));
     }
 
     hideDOMElement(promptInfo);
@@ -88,7 +89,25 @@ socket.on('connect', () => {
     showDOMElement(gameMasterButton);
   });
 
+  socket.on('show-usernames', newSubmissions => {
+    let submissions = promptSubmissions.children;
+
+    //i = [0] is header
+    for(let i = 1;i < submissions.length;i++) {
+      //find submission in new Submissions and get username
+      for(let newSubmission of newSubmissions) {
+        if(submissions[i].textContent == newSubmission.prompt) {
+          submissions[i].textContent += ` (${newSubmission.user})`;
+          break;
+        }
+      }
+    }
+
+    hideDOMElement(userButton);
+  });
+
   socket.on('show-next', () => {
+    showDOMElement(userButton);
     showDOMElement(nextButton);
   });
 
@@ -173,6 +192,10 @@ promptButton.addEventListener('click', e => {
   });
 });
 
+userButton.addEventListener('click', e => {
+  socket.emit('show-username');
+});
+
 nextButton.addEventListener('click', e => {
   socket.emit('reset-game');
 });
@@ -216,6 +239,7 @@ function startRound() {
   hideDOMElement(promptInfo);
   hideDOMElement(promptCounter);
   hideDOMElement(promptSubmissions);
+  hideDOMElement(userButton);
   hideDOMElement(nextButton);
 
   showDOMElement(roomContainer, 'flex');
