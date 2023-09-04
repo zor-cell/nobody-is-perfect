@@ -69,6 +69,10 @@ io.on('connection', socket => {
     //show all connected clients in room
     io.sockets.in(room).emit('update-clients', getClientsInRoom(room));
 
+    if(socket.id == RoomConfig.gameMasters.get(room)) {
+          //set new gamemaster if he leaves
+    };
+
     //tell other room members that user has left
     io.to(room).emit('receive-message', `${getUsername(socket.id)} left the room!`);
 
