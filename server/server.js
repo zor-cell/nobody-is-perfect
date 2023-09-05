@@ -7,7 +7,7 @@ const RoomConfig = {
 
 const io = require('socket.io')(process.env.PORT || 3000, {
   cors: {
-    origin: ['http://localhost:8080', 'http://127.0.0.1:59951', 'https://zor-nobody-is-perfect.netlify.app'],
+    origin: ['http://localhost:8080', 'http://127.0.0.1:63449', 'https://zor-nobody-is-perfect.netlify.app'],
   }
 });
 
