@@ -1,4 +1,5 @@
 //instantiate socket to connect to server
+//IMPORTANT
 //'dev' for local hosting (development)
 //'prod' for global hosting (production)
 const socket = initServer('prod');
@@ -22,9 +23,13 @@ socket.on('connect', () => {
     }
   });
 
-  socket.on('show-question', question => {
+  socket.on('show-question', (question, gamemasterId) => {
     promptQuestion.textContent = question;
 
+    if(socket.id != gamemasterId) {
+      hideDOMElement(gameMaster);
+      hideDOMElement(gameMasterInfo);
+    }
     hideDOMElement(gameMasterInput);
     hideDOMElement(gameMasterButton);
 
@@ -49,9 +54,10 @@ socket.on('connect', () => {
   });
 
   socket.on('show-gamemaster', () => {
-    showDOMElement(gameMaster, 'flex');
     showDOMElement(gameMasterInput);
     showDOMElement(gameMasterButton);
+
+    gameMasterInfo.textContent = 'You are the Game Master!';
   });
 
   socket.on('show-usernames', newSubmissions => {
@@ -149,7 +155,7 @@ promptButton.addEventListener('click', e => {
   promptInput.value = '';
 
   socket.emit('submit-prompt', prompt, message => {
-    //displayMessage(message);
+    displayMessage(message);
 
     hideDOMElement(promptLogin);
     showDOMElement(promptInfo);
@@ -170,7 +176,13 @@ nextButton.addEventListener('click', e => {
 //HELPER FUNCTIONS
 function initServer(mode) {
   if(mode == 'dev') return io('http://localhost:3000');
-  else if(mode == 'prod') return io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/');
+  else if(mode == 'prod') {
+    //temporary
+    console.log(process.env.BACKEND_SERVER_URL);
+
+    //variable injected with netlify
+    return io(process.env.BACKEND_SERVER_URL);
+  }
 
   return null;
 }
@@ -190,23 +202,21 @@ function showDOMElement(element, display = 'block') {
   element.style.display = display;
 }
 
-//callback function passed to backend
-function logMessageCallback(message, isError = false) {
-  displayMessage(message, isError);
-}
-
 function displayMessage(message, isError = false) {
   const div = createDOMElement('div', message);
   if(isError) div.style.color = "red";
 
   infoContainer.append(div);
+  //make sure new content is seen by scrolling down
+  infoContainer.scrollTop = infoContainer.scrollHeight;
 }
 
 function startRound() {
   promptQuestion.textContent = 'No question submitted';
 
   hideDOMElement(loginContainer);
-  hideDOMElement(gameMaster);
+  hideDOMElement(gameMasterInput);
+  hideDOMElement(gameMasterButton);
   hideDOMElement(promptLogin);
   hideDOMElement(promptInfo);
   hideDOMElement(promptCounter);
@@ -215,6 +225,9 @@ function startRound() {
   hideDOMElement(nextButton);
 
   showDOMElement(roomContainer, 'flex');
+  showDOMElement(gameMaster, 'flex');
+  showDOMElement(gameMasterInfo);
 
   promptSubmissions.innerHTML = '<h3>Submissions</h3>';
+  gameMasterInfo.textContent = 'Wait for the Game Master!';
 }

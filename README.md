@@ -1,11 +1,9 @@
 # Nobody is perfect game assistant
+This project is a managemant assistant for the board game "Nobody is perfect". To learn more about this project, visit this blog post about it.
 
-start developement server: /frontend/npx live-server
-start backend server: /server/npx nodemon server.js
+The project is hosted on this website.
 
-Important differentiation!
-const socket depends on whether code is in development or in production
-because of other urls
-
-http://localhost:3000 for development
-https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/ for production
+# Development commands
+If in development change line 1 in index.js from 'prod' to 'dev'!!!
+start live development server (enter in directory frontend): npm run start
+start backend server (enter in directory server): npm run serve

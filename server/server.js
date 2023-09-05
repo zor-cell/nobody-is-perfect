@@ -7,7 +7,7 @@ const RoomConfig = {
 
 const io = require('socket.io')(process.env.PORT || 3000, {
   cors: {
-    origin: ['http://localhost:8080', 'http://127.0.0.1:63449', 'https://zor-nobody-is-perfect.netlify.app'],
+    origin: ['http://localhost:8080', 'http://127.0.0.1:4000', 'https://zor-nobody-is-perfect.netlify.app'],
   }
 });
 
@@ -27,7 +27,11 @@ io.on('connection', socket => {
   });
 
   socket.on('create-room', (room, callback) => {
-    //room collision detection todo
+    //check if room already exists
+    if(io.sockets.adapter.rooms.get(room)) {
+      callback(room, `Room ${room} already exists. Try again!`, true)
+      return;
+    }
 
     socket.join(room);
 
@@ -64,18 +68,21 @@ io.on('connection', socket => {
 
   socket.on('leave-room', (callback) => {
     const room = getRoom(socket);
+
+    //set new gamemaster if leaving player is gamemaster
+    if(socket.id == RoomConfig.gameMasters.get(room)) {
+      chooseGamemaster(socket);
+    };
+
     socket.leave(room);
 
     //show all connected clients in room
     io.sockets.in(room).emit('update-clients', getClientsInRoom(room));
 
-    if(socket.id == RoomConfig.gameMasters.get(room)) {
-          //set new gamemaster if he leaves
-    };
-
     //tell other room members that user has left
     io.to(room).emit('receive-message', `${getUsername(socket.id)} left the room!`);
 
+    //show message to user
     callback(`You left room ${room}!`);
   });
 
@@ -93,7 +100,7 @@ io.on('connection', socket => {
     const room = getRoom(socket);
 
     //show question to all
-    io.sockets.in(room).emit('show-question', question);
+    io.sockets.in(room).emit('show-question', question, RoomConfig.gameMasters.get(room));
     callback(`Submitted question ${question}!`);
 
     //show X out of Y submission to users

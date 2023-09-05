@@ -17,6 +17,7 @@ const roomClientsInfo = document.getElementById('room-clients-info');
 const leaveButton = document.getElementById('room-disconnect');
 
 const gameMaster = document.getElementById('game-master');
+const gameMasterInfo = document.getElementById('game-master-info');
 const gameMasterInput = document.getElementById('game-master-input');
 const gameMasterButton = document.getElementById('game-master-button');
 
