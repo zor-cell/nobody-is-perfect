@@ -177,11 +177,8 @@ nextButton.addEventListener('click', e => {
 function initServer(mode) {
   if(mode == 'dev') return io('http://localhost:3000');
   else if(mode == 'prod') {
-    //temporary
-    console.log(process.env.BACKEND_SERVER_URL);
-
     //variable injected with netlify
-    return io(process.env.BACKEND_SERVER_URL);
+    return io('https://nobody-is-perfect-223a44bfe5d9.herokuapp.com/');
   }
 
   return null;
